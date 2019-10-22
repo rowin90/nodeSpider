@@ -7,6 +7,11 @@ const HTTPReqParamError = require("../errors/http_request_params_error");
 /* GET users listing. */
 router.get("/", function(req, res, next) {
   (async () => {
+    throw new HTTPReqParamError(
+      "userId",
+      "用户 id 为空",
+      "userId can no be null"
+    );
     const users = await UserService.getAllUsers();
     res.locals.users = users;
   })()
