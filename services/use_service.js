@@ -5,7 +5,7 @@ module.exports.getAllUsers = async function() {
   const users = await User.list();
   return users;
 };
-module.exports.addNewUser = async function({ name, age }) {
+module.exports.addNewUser = async function(name, age) {
   const user = await User.insert({
     name,
     age

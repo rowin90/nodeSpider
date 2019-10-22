@@ -2,28 +2,49 @@ var express = require("express");
 var router = express.Router();
 // const User = require("../models/in_memo/user");
 const UserService = require("../services/use_service");
+const HTTPReqParamError = require("../errors/http_request_params_error");
 
 /* GET users listing. */
-router.get("/", function(req, res) {
+router.get("/", function(req, res, next) {
   (async () => {
     const users = await UserService.getAllUsers();
     res.locals.users = users;
-    res.render("users");
   })()
-    .then(r => console.log(r))
-    .catch(e => console.log(e));
+    .then(() => {
+      res.render("users");
+    })
+    .catch(e => {
+      next(e);
+    });
 });
 
-router.post("/", function(req, res) {
-  const { firstName, lastName, age } = req.body;
-  const u = UserService.addNewUser(firstName, lastName, age);
+router.post("/", async function(req, res) {
+  const { name, age } = req.body;
+  const u = await UserService.addNewUser(name, age);
+  console.log(u);
+
   res.json(u);
 });
 
 router.get("/:userId", function(req, res) {
-  const user = UserService.getUserById(Number(req.params.userId));
-  res.locals.user = user;
-  res.render("user");
+  (async () => {
+    let { userId } = req.params;
+    try {
+      if (userId.length < 5) {
+        throw new HTTPReqParamError(
+          "userId",
+          "用户 id 为空",
+          "userId can no be null"
+        );
+      } else {
+        const user = await UserService.getUserById(Number(userId));
+        res.locals.user = user;
+        res.render("user");
+      }
+    } catch (error) {
+      res.json(error);
+    }
+  })();
 });
 
 router.post("/:userId/subscription", function(req, res, next) {
