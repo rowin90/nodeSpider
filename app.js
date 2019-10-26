@@ -25,19 +25,19 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api", apiIndex);
 
-app.use(httpErrHandler());
-app.use(errHandler());
-
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+// app.use(function(req, res, next) {
+//   next(createError(404));
+// });
 
 app.use(function(req, res, next) {
   if (!res.headersSent) {
     next(new NotFoundError(req.method, req.path, "没有找到您要的资源"));
   }
 });
+
+app.use(httpErrHandler());
+app.use(errHandler());
 
 process.on("uncaughtException", err => {
   logger.error("uncaughtException", { err });

@@ -3,9 +3,10 @@ const Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 
 const UserSchema = new Schema({
-  name: { type: String, required: true, index: 1 },
+  username: { type: String, required: true, index: 1, unique: true },
 
-  age: { type: Number, max: 120, min: [0, "you are too young"] }
+  age: { type: Number, max: 120, min: [0, "you are too young"] },
+  password: { type: String }
 });
 
 const UserModel = mongoose.model("user", UserSchema);
