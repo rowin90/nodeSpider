@@ -5,7 +5,7 @@ var cookieParser = require("cookie-parser");
 // var logger = require("morgan");
 const httpErrHandler = require("./middlewares/http_error_handler");
 const errHandler = require("./middlewares/error_handler");
-const NotFoundError = require("./errors/resource_no_found_error");
+const NotFoundError = require("./errors/http_errors/resource_no_found_error");
 const logger = require("./utils/loggers/logger");
 require("./services/mongodb_connection");
 

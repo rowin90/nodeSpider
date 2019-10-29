@@ -9,9 +9,13 @@ const SubSchema = new Schema({
 
 const SubModel = mongoose.model("Sub", SubSchema);
 
-async function insert(sub) {
-  const created = await SubModel.create(sub);
-  return created;
+async function insert(sub, url) {
+  try {
+    const created = await SubModel.create({ userId: sub, url });
+    return created;
+  } catch (error) {
+    throw new Error(error);
+  }
 }
 
 async function list(params) {

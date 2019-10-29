@@ -3,6 +3,7 @@ var router = express.Router();
 // const User = require("../models/in_memo/user");
 const UserService = require("../../services/use_service");
 const apiRes = require("../../utils/api_response");
+const auth = require("../../middlewares/auth");
 
 /* GET users listing. */
 router.get("/", function(req, res, next) {
@@ -21,37 +22,60 @@ router.get("/", function(req, res, next) {
     });
 });
 
-router.post("/", async function(req, res) {
-  const { name, age } = req.body;
-  const u = await UserService.addNewUser(name, age);
-  console.log(u);
+router.post("/", function(req, res, next) {
+  (async () => {
+    const { username, password, name } = req.body;
+    const result = await UserService.addNewUser({ username, password, name });
 
-  res.json(u);
+    return result;
+  })()
+    .then(r => {
+      res.data = r;
+      apiRes(req, res);
+    })
+    .catch(e => {
+      next(e);
+    });
 });
 
-router.get("/:userId", function(req, res) {
+router.get("/:userId", function(req, res, next) {
   (async () => {
     let { userId } = req.params;
     try {
-      const user = await UserService.getUserById(Number(userId));
-      res.locals.user = user;
-      res.render("user");
+      const user = await UserService.getUserById(userId);
+      return user;
     } catch (error) {
       res.json(error);
     }
-  })();
+  })()
+    .then(r => {
+      res.data = r;
+      apiRes(req, res);
+    })
+    .catch(e => {
+      next(e);
+    });
 });
 
-router.post("/:userId/subscription", function(req, res, next) {
-  try {
-    const sub = UserService.createSubscription(
-      Number(req.params.userId),
-      req.body.url
-    );
-    res.json(sub);
-  } catch (e) {
-    next(e);
-  }
+router.post("/:userId/subscription", auth(), function(req, res, next) {
+  (async () => {
+    try {
+      const sub = await UserService.createSubscription(
+        req.params.userId,
+        req.body.url
+      );
+      return sub;
+    } catch (e) {
+      next(e);
+    }
+  })()
+    .then(r => {
+      res.data = r;
+      apiRes(req, res);
+    })
+    .catch(e => {
+      next(e);
+    });
 });
 
 module.exports = router;

@@ -8,10 +8,11 @@ function handler(options) {
       userInfo: req.user
     };
     logger.error(
-      "uncaught error in the middelware process",
+      "uncaught error in the middleware process",
       err.message,
       errMeta
     );
+    res.json({ errMeta });
   };
 }
 
