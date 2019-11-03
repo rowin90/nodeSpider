@@ -1,8 +1,9 @@
 const mongoose = require("mongoose");
+const mongoSetting = require("../setting").mongo;
 
 mongoose.Promise = Promise;
 
-const uri = "mongodb://localhost:27017/test";
+const uri = mongoSetting.uri;
 mongoose.connect(uri, { useMongoClient: true });
 
 const db = mongoose.connection;
