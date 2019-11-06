@@ -3,6 +3,7 @@ const HTTPReqParamsError = require("../errors/http_errors/http_request_params_er
 const HTTPBaseError = require("../errors/http_errors/http_base_error");
 const axios = require("axios");
 const logger = require("../utils/loggers/logger");
+const Content = require("../models/mongoose/content");
 /**
  * 注册爬虫
  * @param  spider 爬虫服务对象
@@ -143,5 +144,85 @@ async function registerSpider(spider) {
   const createdSpider = await Spider.registerSpider(toCreate);
   return createdSpider;
 }
+
+async function startFetchingProcess(spider) {
+  const { contentList } = spider;
+  let { latestId } = spider;
+  const { url, pageSizeLimit, frequencyLimit } = contentList;
+
+  const actualPeriodMills = Math.ceil(1000 / frequencyLimit) * 2;
+  const intervalId = setInterval(() => {
+    (async () => {
+      const list = await fetchingLists(url, latestId, pageSizeLimit);
+      const wrappedContent = list.map(c => {
+        return {
+          spiderServiceId: spider._id,
+          spiderServiceContentId: c.contentId,
+          contentType: c.contentType,
+          content: {
+            html: c.content.html,
+            content: c.content.text,
+            originCreatedAt: c.content.originCreatedAt
+          },
+          tags: c.tags,
+          title: c.title
+        };
+      });
+
+      await Content.model.insertMany(wrappedContent);
+      latestId =
+        wrappedContent[wrappedContent.length - 1].spiderServiceContentId;
+
+      if (wrappedContent.length < pageSizeLimit) {
+        clearInterval(intervalId);
+      }
+    })().catch(e => {
+      logger.error("error fetching list data from spider service", {
+        errMsg: e.message,
+        errStack: e.stack
+      });
+    });
+  }, actualPeriodMills);
+}
+
+async function fetchingLists(url, latestId, pageSize) {
+  const contentList = await axios
+    .get(url, { latestId, pageSize })
+    .then(res => {
+      if (!res.data || !res.data.contentList) {
+        throw new Error("invalid response from spider");
+      }
+      return res.data.contentList;
+    })
+    .catch(e => {
+      logger.error("error fetching content from spider", {
+        errMsg: e.message,
+        errStack: e.stack
+      });
+    });
+
+  // const newlatestId = contentList[contentList.length - 1]._id;
+  return contentList;
+}
+
+async function initSpider() {
+  const spiders = await Spider.model.find({ status: "validated" });
+  for (let i = 0; i < spiders.length; i++) {
+    const spider = spiders[i];
+    startFetchingProcess(spider).catch(e => {
+      logger.error(`error starting fetching process on spider ${spider._id}`, {
+        errMsg: e.message,
+        errStack: e.stack
+      });
+    });
+  }
+}
+
+initSpider().catch(e => {
+  logger.error(`error initializing spider process`, {
+    errMsg: e.message,
+    errStack: e.stack
+  });
+});
 
 module.exports = { registerSpider };

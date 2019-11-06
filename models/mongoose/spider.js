@@ -40,7 +40,8 @@ const SpiderSchema = new Schema({
       type: Number,
       default: 10,
       required: true
-    }
+    },
+    latestId: String
   }
 });
 
