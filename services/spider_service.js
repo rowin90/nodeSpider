@@ -189,10 +189,10 @@ async function fetchingLists(url, latestId, pageSize) {
   const contentList = await axios
     .get(url, { latestId, pageSize })
     .then(res => {
-      if (!res.data || !res.data.contentList) {
+      if (!res.data || !res.data.data.contentList) {
         throw new Error("invalid response from spider");
       }
-      return res.data.contentList;
+      return res.data.data.contentList;
     })
     .catch(e => {
       logger.error("error fetching content from spider", {
